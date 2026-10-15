@@ -8,6 +8,8 @@ percent overall, concentrated in first-year, month-to-month accounts, and
 the logistic regression that ships scores 0.846 ROC AUC on customers it
 never saw in training.
 
+Live app: https://telco-churn-analysis-t5rx.onrender.com (free tier, the first request after idle can take a minute)
+
 ## Problem
 
 A telecom provider loses about a quarter of its customers in this dataset.
