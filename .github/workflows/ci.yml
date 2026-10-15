@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check src tests data app.py
+      - name: Fetch data
+        run: python data/get_data.py
+      - name: Test
+        run: pytest -q
+
+  container:
+    # Build the image and prove the app starts inside it. The image
+    # trains the model at build time, so this also proves the full
+    # data to app path on a clean machine.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t telco-churn:ci .
+      - name: Start container and check health
+        run: |
+          docker run -d --name app -p 8501:8501 telco-churn:ci
+          for i in $(seq 1 30); do
+            if curl -fs http://localhost:8501/_stcore/health; then exit 0; fi
+            sleep 2
+          done
+          docker logs app
+          exit 1
